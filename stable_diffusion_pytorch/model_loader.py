@@ -77,6 +77,8 @@ def load_diffusion_new(device):
             out_channels, in_channels, kernel_size, _ = value.shape
             new_state_dict[key.replace('.weight', '.depthwise.weight')] = torch.rand(in_channels, 1, kernel_size, kernel_size)
             new_state_dict[key.replace('.weight', '.pointwise.weight')] = torch.zeros(out_channels, in_channels, 1, 1)
+            new_state_dict[key.replace('.weight', '.depthwise.bias')] = torch.zeros(in_channels)
+            new_state_dict[key.replace('.weight', '.pointwise.bias')] = torch.zeros(out_channels)
         elif ("conv" in key and "bias" in key) or ("0.bias" in key):
             new_state_dict[key.replace(".bias", ".conv.bias")] = value
         else:

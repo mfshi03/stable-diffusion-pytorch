@@ -63,19 +63,18 @@ def load_diffusion(device):
     diffusion = Diffusion().to(device)
 
     new_state_dict = {}
+    '''
     for key, value in state_dict.items():
+        print(key, value.shape)
         if key.endswith('.conv.weight'):
-            print(key)
             new_state_dict[key] = value
             out_channels, in_channels, kernel_size, _ = value.shape
-            depthwise_weight = torch.rand(in_channels, 1, kernel_size, kernel_size)
-            pointwise_weight = torch.zeros(out_channels, in_channels, 1, 1) 
-            new_state_dict[key.replace('.conv.weight', '.depthwise.weight')] = depthwise_weight
-            new_state_dict[key.replace('.conv.weight', '.pointwise.weight')] = pointwise_weight
+            new_state_dict[key.replace('.conv.weight', '.depthwise.weight')] = torch.rand(in_channels, 1, kernel_size, kernel_size) 
+            new_state_dict[key.replace('.conv.weight', '.pointwise.weight')] = torch.zeros(out_channels, in_channels, 1, 1) 
         else:
             new_state_dict[key] = value
-
-    diffusion.load_state_dict(new_state_dict, strict=False)
+    '''
+    diffusion.load_state_dict(state_dict, strict=False)
 
     return diffusion
 

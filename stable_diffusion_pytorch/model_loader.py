@@ -68,7 +68,7 @@ def load_diffusion(device):
             print(key)
             out_channels, in_channels, kernel_size, _ = value.shape
             depthwise_weight = torch.rand(in_channels, 1, kernel_size, kernel_size)
-            pointwise_weight = torch.eye(out_channels, in_channels).view(out_channels, in_channels, 1, 1)
+            pointwise_weight = torch.zeros(out_channels, in_channels, 1, 1) 
             new_state_dict[key.replace('.conv.weight', '.depthwise.weight')] = depthwise_weight
             new_state_dict[key.replace('.conv.weight', '.pointwise.weight')] = pointwise_weight
         elif key.endswith('.conv.bias'):

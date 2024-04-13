@@ -7,10 +7,10 @@ class DepthSepLoRAConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
-        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size, stride=stride, padding=padding, groups=in_channels)
-        self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1)
-        self.pointwise.weight.data.zero_()  # zero pointwise weights at initialization
-
+        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size, stride=stride, padding=padding, groups=in_channels, bias=False)
+        self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
+        self.pointwise.bias.data.zero_()  
+        self.depthwise.bias.data.zero_()
     def forward(self, x):
         return self.conv(x) #+ self.pointwise(self.depthwise(x))
 
@@ -39,7 +39,7 @@ class ResidualBlock(nn.Module):
         if in_channels == out_channels:
             self.residual_layer = nn.Identity()
         else:
-            self.residual_layer = DepthSepLoRAConv2d(in_channels, out_channels, kernel_size=1, padding=0)
+            self.residual_layer = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
     
     def forward(self, feature, time):
         residue = feature

@@ -66,6 +66,7 @@ def load_diffusion(device):
     for key, value in state_dict.items():
         if key.endswith('.conv.weight'):
             print(key)
+            new_state_dict[key] = value
             out_channels, in_channels, kernel_size, _ = value.shape
             depthwise_weight = torch.rand(in_channels, 1, kernel_size, kernel_size)
             pointwise_weight = torch.zeros(out_channels, in_channels, 1, 1) 

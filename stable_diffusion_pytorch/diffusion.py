@@ -39,7 +39,7 @@ class ResidualBlock(nn.Module):
         if in_channels == out_channels:
             self.residual_layer = nn.Identity()
         else:
-            self.residual_layer = nn.Conv2d(in_channels, out_channels, kernel_size=1, padding=0)
+            self.residual_layer = DepthSepLoRAConv2d(in_channels, out_channels, kernel_size=1, padding=0)
     
     def forward(self, feature, time):
         residue = feature
@@ -74,7 +74,7 @@ class AttentionBlock(nn.Module):
         self.linear_geglu_1  = nn.Linear(channels, 4 * channels * 2)
         self.linear_geglu_2 = nn.Linear(4 * channels, channels)
 
-        self.conv_output = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
+        self.conv_output = DepthSepLoRAConv2d(channels, channels, kernel_size=1, padding=0)
     
     def forward(self, x, context):
         residue_long = x
@@ -184,7 +184,7 @@ class FinalLayer(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.groupnorm = nn.GroupNorm(32, in_channels)
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.conv = DepthSepLoRAConv2d(in_channels, out_channels, kernel_size=3, padding=1)
     
     def forward(self, x):
         x = self.groupnorm(x)

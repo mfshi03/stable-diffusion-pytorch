@@ -82,7 +82,7 @@ def load_diffusion_new(device):
         else:
             new_state_dict[key] = value
 
-    diffusion.load_state_dict(new_state_dict, strict=False)
+    diffusion.load_state_dict(new_state_dict)
 
     return diffusion
 

@@ -1,5 +1,5 @@
 import torch
-from . import Tokenizer, CLIP, Encoder, Decoder, Diffusion
+from . import Tokenizer, CLIP, Encoder, Decoder, Diffusion, OriginalDiffusion
 from . import util
 import warnings
 
@@ -56,14 +56,21 @@ def load_decoder(device):
     return decoder
 
 
-def load_diffusion(device):
+def load_diffusion_original(device):
     state_dict = torch.load(util.get_file_path('ckpt/diffusion.pt'))
     state_dict = make_compatible(state_dict)
 
     diffusion = Diffusion().to(device)
+    diffusion.load_state_dict(state_dict)
+    return diffusion
 
-    new_state_dict = {}
+def load_diffusion_new(device):
+    state_dict = torch.load(util.get_file_path('ckpt/diffusion.pt'))
+    state_dict = make_compatible(state_dict)
+
+    diffusion = Diffusion().to(device)
     '''
+    new_state_dict = {}
     for key, value in state_dict.items():
         print(key, value.shape)
         if key.endswith('.conv.weight'):
@@ -78,10 +85,10 @@ def load_diffusion(device):
 
     return diffusion
 
-def preload_models(device):
+def preload_models(device, original=False):
     return {
         'clip': load_clip(device),
         'encoder': load_encoder(device),
         'decoder': load_decoder(device),
-        'diffusion': load_diffusion(device),
+        'diffusion': load_diffusion_original(device) if original else load_diffusion_new,
     }

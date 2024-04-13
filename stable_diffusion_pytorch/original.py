@@ -3,16 +3,6 @@ from torch import nn
 from torch.nn import functional as F
 from .attention import SelfAttention, CrossAttention
 
-class DepthSepLoRAConv2d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0):
-        super().__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
-        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size, stride=stride, padding=padding, groups=in_channels)
-        self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1)
-        self.pointwise.weight.data.zero_()  # zero pointwise weights at initialization
-
-    def forward(self, x):
-        return self.conv(x) #+ self.pointwise(self.depthwise(x))
 
 class TimeEmbedding(nn.Module):
     def __init__(self, n_embd):
@@ -30,11 +20,11 @@ class ResidualBlock(nn.Module):
     def __init__(self, in_channels, out_channels, n_time=1280):
         super().__init__()
         self.groupnorm_feature = nn.GroupNorm(32, in_channels)
-        self.conv_feature = DepthSepLoRAConv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.conv_feature = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
         self.linear_time = nn.Linear(n_time, out_channels)
 
         self.groupnorm_merged = nn.GroupNorm(32, out_channels)
-        self.conv_merged = DepthSepLoRAConv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        self.conv_merged = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
 
         if in_channels == out_channels:
             self.residual_layer = nn.Identity()
@@ -64,7 +54,7 @@ class AttentionBlock(nn.Module):
         channels = n_head * n_embd
         
         self.groupnorm = nn.GroupNorm(32, channels, eps=1e-6)
-        self.conv_input = DepthSepLoRAConv2d(channels, channels, kernel_size=1, padding=0)
+        self.conv_input = nn.Conv2d(channels, channels, kernel_size=1, padding=0)
 
         self.layernorm_1 = nn.LayerNorm(channels)
         self.attention_1 = SelfAttention(n_head, channels, in_proj_bias=False)
@@ -111,7 +101,7 @@ class AttentionBlock(nn.Module):
 class Upsample(nn.Module):
     def __init__(self, channels):
         super().__init__()
-        self.conv = DepthSepLoRAConv2d(channels, channels, kernel_size=3, padding=1)
+        self.conv = nn.Conv2d(channels, channels, kernel_size=3, padding=1)
     
     def forward(self, x):
         x = F.interpolate(x, scale_factor=2, mode='nearest')
@@ -132,16 +122,16 @@ class UNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.encoders = nn.ModuleList([
-            SwitchSequential(DepthSepLoRAConv2d(4, 320, kernel_size=3, padding=1)),
+            SwitchSequential(nn.Conv2d(4, 320, kernel_size=3, padding=1)),
             SwitchSequential(ResidualBlock(320, 320), AttentionBlock(8, 40)),
             SwitchSequential(ResidualBlock(320, 320), AttentionBlock(8, 40)),
-            SwitchSequential(DepthSepLoRAConv2d(320, 320, kernel_size=3, stride=2, padding=1)),
+            SwitchSequential(nn.Conv2d(320, 320, kernel_size=3, stride=2, padding=1)),
             SwitchSequential(ResidualBlock(320, 640), AttentionBlock(8, 80)),
             SwitchSequential(ResidualBlock(640, 640), AttentionBlock(8, 80)),
-            SwitchSequential(DepthSepLoRAConv2d(640, 640, kernel_size=3, stride=2, padding=1)),
+            SwitchSequential(nn.Conv2d(640, 640, kernel_size=3, stride=2, padding=1)),
             SwitchSequential(ResidualBlock(640, 1280), AttentionBlock(8, 160)),
             SwitchSequential(ResidualBlock(1280, 1280), AttentionBlock(8, 160)),
-            SwitchSequential(DepthSepLoRAConv2d(1280, 1280, kernel_size=3, stride=2, padding=1)),
+            SwitchSequential(nn.Conv2d(1280, 1280, kernel_size=3, stride=2, padding=1)),
             SwitchSequential(ResidualBlock(1280, 1280)),
             SwitchSequential(ResidualBlock(1280, 1280)),
         ])
@@ -192,7 +182,7 @@ class FinalLayer(nn.Module):
         x = self.conv(x)
         return x
 
-class Diffusion(nn.Module):
+class OriginalDiffusion(nn.Module):
     def __init__(self):
         super().__init__()
         self.time_embedding = TimeEmbedding(320)

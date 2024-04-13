@@ -71,12 +71,14 @@ def load_diffusion_new(device):
     diffusion = Diffusion().to(device)
     new_state_dict = {}
     for key, value in state_dict.items():
-        if "conv" in key:
+        if "conv" in key and "weight" in key:
             print(key)
             new_state_dict[key.replace(".weight", ".conv.weight")] = value
             out_channels, in_channels, kernel_size, _ = value.shape
             new_state_dict[key.replace('.weight', '.depthwise.weight')] = torch.rand(in_channels, 1, kernel_size, kernel_size) 
             new_state_dict[key.replace('.weight', '.pointwise.weight')] = torch.zeros(out_channels, in_channels, 1, 1) 
+        elif "conv" in key and "bias" in key:
+            new_state_dict[key.replace(".bias", ".conv.bias")] = value
         else:
             new_state_dict[key] = value
 

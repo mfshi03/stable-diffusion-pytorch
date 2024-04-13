@@ -9,7 +9,8 @@ class DepthSepLoRAConv2d(nn.Module):
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
         self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size, stride=stride, padding=padding, groups=in_channels)
         self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1)
-
+        self.pointwise.weight.data.zero_()  # zero pointwise weights at initialization
+    
     def forward(self, x):
         return self.conv(x) + self.pointwise(self.depthwise(x))
 

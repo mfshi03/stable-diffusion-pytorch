@@ -90,5 +90,5 @@ def preload_models(device, original=False):
         'clip': load_clip(device),
         'encoder': load_encoder(device),
         'decoder': load_decoder(device),
-        'diffusion': load_diffusion_original(device) if original else load_diffusion_new,
+        'diffusion': load_diffusion_original(device) if original else load_diffusion_new(device),
     }

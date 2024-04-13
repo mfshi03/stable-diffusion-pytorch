@@ -55,12 +55,29 @@ def load_decoder(device):
     decoder.load_state_dict(state_dict)
     return decoder
 
+
 def load_diffusion(device):
     state_dict = torch.load(util.get_file_path('ckpt/diffusion.pt'))
     state_dict = make_compatible(state_dict)
 
     diffusion = Diffusion().to(device)
-    diffusion.load_state_dict(state_dict)
+
+    new_state_dict = {}
+    for key, value in state_dict.items():
+        if key.endswith('.conv.weight'):
+            print(key)
+            out_channels, in_channels, kernel_size, _ = value.shape
+            depthwise_weight = torch.rand_like(in_channels, 1, kernel_size, kernel_size)
+            pointwise_weight = torch.eye(out_channels, in_channels).view(out_channels, in_channels, 1, 1)
+            new_state_dict[key.replace('.conv.weight', '.depthwise.weight')] = depthwise_weight
+            new_state_dict[key.replace('.conv.weight', '.pointwise.weight')] = pointwise_weight
+        elif key.endswith('.conv.bias'):
+            new_state_dict[key.replace('.conv.bias', '.pointwise.bias')] = value
+        else:
+            new_state_dict[key] = value
+
+    diffusion.load_state_dict(new_state_dict, strict=False)
+
     return diffusion
 
 def preload_models(device):

@@ -60,7 +60,7 @@ def load_diffusion_original(device):
     state_dict = torch.load(util.get_file_path('ckpt/diffusion.pt'))
     state_dict = make_compatible(state_dict)
 
-    diffusion = Diffusion().to(device)
+    diffusion = OriginalDiffusion().to(device)
     diffusion.load_state_dict(state_dict)
     return diffusion
 
@@ -81,7 +81,7 @@ def load_diffusion_new(device):
         else:
             new_state_dict[key] = value
     '''
-    diffusion.load_state_dict(state_dict, strict=False)
+    diffusion.load_state_dict(state_dict)
 
     return diffusion
 

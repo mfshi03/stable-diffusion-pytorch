@@ -126,7 +126,7 @@ def generate(
         del tokenizer, clip
 
         if sampler == "k_lms":
-            sampler = KLMSSampler(n_inference_steps=n_inference_steps)
+            sampler = KLMSSampler(n_inference_steps=n_inference_steps, n_training_steps=100)
         elif sampler == "k_euler":
             sampler = KEulerSampler(n_inference_steps=n_inference_steps)
         elif sampler == "k_euler_ancestral":

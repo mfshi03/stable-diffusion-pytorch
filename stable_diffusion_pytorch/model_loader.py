@@ -50,9 +50,23 @@ def load_encoder(device):
 def load_decoder(device):
     state_dict = torch.load(util.get_file_path('ckpt/decoder.pt'))
     state_dict = make_compatible(state_dict)
+    new_state_dict = {}
+    for key, value in state_dict.items():
+        if ("conv" in key and "weight" in key) or ("0.weight" in key):
+            print(key)
+            new_state_dict[key.replace(".weight", ".conv.weight")] = value
+            out_channels, in_channels, kernel_size, _ = value.shape
+            new_state_dict[key.replace('.weight', '.depthwise.weight')] = torch.rand(in_channels, 1, kernel_size, kernel_size)
+            new_state_dict[key.replace('.weight', '.pointwise.weight')] = torch.zeros(out_channels, in_channels, 1, 1)
+            new_state_dict[key.replace('.weight', '.depthwise.bias')] = torch.zeros(in_channels)
+            new_state_dict[key.replace('.weight', '.pointwise.bias')] = torch.zeros(out_channels)
+        elif ("conv" in key and "bias" in key) or ("0.bias" in key):
+            new_state_dict[key.replace(".bias", ".conv.bias")] = value
+        else:
+            new_state_dict[key] = value
 
     decoder = Decoder().to(device)
-    decoder.load_state_dict(state_dict)
+    decoder.load_state_dict(new_state_dict)
     return decoder
 
 
